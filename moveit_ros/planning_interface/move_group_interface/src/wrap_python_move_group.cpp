@@ -45,8 +45,8 @@
 #include <tf_conversions/tf_eigen.h>
 
 #include <boost/python.hpp>
-#include <eigenpy/eigenpy.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/python/numpy.hpp>
+#include <memory>
 #include <Python.h>
 
 /** @cond IGNORE */
@@ -515,27 +515,29 @@ public:
     }
   }
 
-  Eigen::MatrixXd getJacobianMatrixPython(bp::list& joint_values)
+  bp::numpy::ndarray getJacobianMatrixPython(bp::list& joint_values)
   {
     std::vector<double> v = py_bindings_tools::doubleFromList(joint_values);
     robot_state::RobotState state(getRobotModel());
     state.setToDefaultValues();
     auto group = state.getJointModelGroup(getName());
     state.setJointGroupPositions(group, v);
-    return state.getJacobian(group);
+    auto J = state.getJacobian(group);
+    // Create numpy 2darray of dtype double
+    bp::tuple shape = bp::make_tuple(J.rows(), J.cols());
+    bp::numpy::dtype dtype = bp::numpy::dtype::get_builtin<double>();
+    bp::numpy::ndarray result = bp::numpy::empty(shape, dtype);
+    // Copy data from Eigen(ColMajor) to numpy(RowMajor)
+    Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+        reinterpret_cast<double*>(result.get_data()), J.rows(), J.cols()) = J;
+    return result;
   }
 };
 
 class MoveGroupWrapper : public MoveGroupInterfaceWrapper
 {
-public:
-  MoveGroupWrapper(const std::string& group_name, const std::string& robot_description, const std::string& ns = "")
-    : MoveGroupInterfaceWrapper(group_name, robot_description, ns)
-  {
-    ROS_WARN("The MoveGroup class is deprecated and will be removed in ROS lunar. Please use MoveGroupInterface "
-             "instead.");
-  }
-};
+  Py_Initialize();
+  bp::numpy::initialize();
 
 static void wrap_move_group_interface()
 {

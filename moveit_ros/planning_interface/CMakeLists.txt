@@ -13,10 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_warehouse
   moveit_ros_manipulation
   moveit_ros_move_group
-  eigen_conversions
-  eigenpy
-  tf_conversions
-  tf
+  geometry_msgs
+  tf2
+  tf2_eigen
+  tf2_geometry_msgs
+  tf2_ros
   roscpp
   actionlib
   rospy
@@ -28,9 +29,9 @@ find_package(PythonLibs "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" REQUIR
 
 find_package(Boost REQUIRED)
 if(Boost_VERSION LESS 106700)
-  set(BOOST_PYTHON_COMPONENT python)
+  set(BOOST_PYTHON_COMPONENT python numpy)
 elseif()
-  set(BOOST_PYTHON_COMPONENT python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
+  set(BOOST_PYTHON_COMPONENT python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} numpy${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
 endif()
 
 find_package(Boost REQUIRED COMPONENTS
